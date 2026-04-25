@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stone Pit – Icon Generator</title>
+<style>
+  body{background:#0b0c1a;color:#e8eaf6;font-family:system-ui,sans-serif;
+       display:flex;flex-direction:column;align-items:center;padding:30px 20px;gap:20px;}
+  h2{color:#f5c518;font-size:1.4rem;letter-spacing:.06em;}
+  p{color:#7986cb;font-size:.82rem;text-align:center;max-width:420px;line-height:1.6;}
+  #preview{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px;}
+  .prev-item{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.65rem;color:#7986cb;}
+  button{
+    padding:13px 32px;border-radius:14px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#f5c518,#ff6b35);
+    color:#0b0c1a;font-weight:800;font-size:.88rem;letter-spacing:.1em;text-transform:uppercase;
+    box-shadow:0 4px 18px rgba(245,197,24,.3);transition:all .2s;
+  }
+  button:hover{transform:translateY(-2px);}
+  .done{color:#00e676;font-size:.82rem;}
+</style>
+</head>
+<body>
+<h2>🪨 Stone Pit — Icon Generator</h2>
+<p>Click the button below to generate and download all required app icon sizes. Place them in an <code style="color:#f5c518">icons/</code> folder next to your <code style="color:#f5c518">index.html</code>.</p>
+<button onclick="generateAll()">⬇ Generate & Download All Icons</button>
+<div id="preview"></div>
+<div id="done" class="done" style="display:none">✓ All icons downloaded! Move them to your /icons/ folder.</div>
+
+<script>
+const SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
+
+function drawIcon(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const s = size;
+  const cx = s / 2, cy = s / 2, r = s / 2;
+
+  /* ── Background circle: dark blue ── */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  const bgGrad = ctx.createRadialGradient(cx, cy * 0.7, 0, cx, cy, r);
+  bgGrad.addColorStop(0, '#1a1e35');
+  bgGrad.addColorStop(1, '#0b0c1a');
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+
+  /* ── Outer golden ring ── */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - s * 0.02, 0, Math.PI * 2);
+  ctx.strokeStyle = '#f5c518';
+  ctx.lineWidth = s * 0.04;
+  ctx.stroke();
+
+  /* ── Wooden board shape ── */
+  const bw = s * 0.75, bh = s * 0.38;
+  const bx = cx - bw / 2, by = cy - bh / 2 - s * 0.04;
+  const brd = s * 0.07;
+
+  // Board shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = s * 0.06;
+  ctx.shadowOffsetY = s * 0.04;
+
+  // Board body
+  const woodGrad = ctx.createLinearGradient(bx, by, bx, by + bh);
+  woodGrad.addColorStop(0,   '#e8a44a');
+  woodGrad.addColorStop(0.4, '#c8782a');
+  woodGrad.addColorStop(0.8, '#a05818');
+  woodGrad.addColorStop(1,   '#7a3f08');
+  roundRect(ctx, bx, by, bw, bh, brd, woodGrad);
+
+  // Board 3D bottom edge
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  const edgeGrad = ctx.createLinearGradient(bx, by + bh, bx, by + bh + s * 0.06);
+  edgeGrad.addColorStop(0, '#7a3f08');
+  edgeGrad.addColorStop(1, '#4a2004');
+  roundRect(ctx, bx + s*0.01, by + bh, bw - s*0.02, s * 0.06, 0, edgeGrad, true);
+
+  // Board border
+  ctx.beginPath();
+  roundRectPath(ctx, bx, by, bw, bh, brd);
+  ctx.strokeStyle = '#d4892c';
+  ctx.lineWidth = s * 0.025;
+  ctx.stroke();
+
+  // Inner inlay border
+  ctx.beginPath();
+  roundRectPath(ctx, bx + s*0.025, by + s*0.025, bw - s*0.05, bh - s*0.05, brd * 0.7);
+  ctx.strokeStyle = 'rgba(255,200,80,0.3)';
+  ctx.lineWidth = s * 0.012;
+  ctx.stroke();
+
+  /* ── 4 pits per row, 2 rows ── */
+  const pitR = s * 0.058;
+  const pitY1 = by + bh * 0.3;
+  const pitY2 = by + bh * 0.72;
+  const pitSpacing = bw * 0.195;
+  const pitsStartX = bx + bw * 0.13;
+
+  for (let i = 0; i < 4; i++) {
+    const px = pitsStartX + i * pitSpacing;
+    drawPit(ctx, px, pitY1, pitR);
+    drawPit(ctx, px, pitY2, pitR);
+  }
+
+  /* ── Stone Pit text ── */
+  ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.shadowBlur = s * 0.04;
+  ctx.shadowOffsetY = s * 0.02;
+
+  const fontSize1 = s * 0.115;
+  ctx.font = `900 ${fontSize1}px 'Arial Black', Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // "STONE" — golden
+  const textGrad = ctx.createLinearGradient(cx, cy + bh * 0.65, cx, cy + bh * 0.65 + fontSize1);
+  textGrad.addColorStop(0, '#fff8c0');
+  textGrad.addColorStop(0.5, '#f5c518');
+  textGrad.addColorStop(1, '#c8900a');
+  ctx.fillStyle = textGrad;
+  ctx.fillText('STONE', cx - fontSize1 * 1.5, cy + s * 0.27);
+
+  // "PIT" — blue
+  const textGrad2 = ctx.createLinearGradient(cx, cy + bh * 0.65, cx, cy + bh * 0.65 + fontSize1);
+  textGrad2.addColorStop(0, '#a0eeff');
+  textGrad2.addColorStop(0.5, '#29b6f6');
+  textGrad2.addColorStop(1, '#0d6ea0');
+  ctx.fillStyle = textGrad2;
+  ctx.fillText('PIT', cx + fontSize1 * 1.6, cy + s * 0.27);
+
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+  return canvas;
+}
+
+function drawPit(ctx, cx, cy, r) {
+  // Pit shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = r * 1.2;
+  ctx.shadowOffsetY = r * 0.4;
+
+  const pitGrad = ctx.createRadialGradient(cx - r*0.2, cy - r*0.2, 0, cx, cy, r);
+  pitGrad.addColorStop(0, '#4a2000');
+  pitGrad.addColorStop(0.5, '#1e0a00');
+  pitGrad.addColorStop(1, '#0d0500');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = pitGrad;
+  ctx.fill();
+
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+  // Rim highlight
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(210,130,40,0.7)';
+  ctx.lineWidth = r * 0.2;
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, noTop = false) {
+  ctx.beginPath();
+  roundRectPath(ctx, x, y, w, h, r, noTop);
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+function roundRectPath(ctx, x, y, w, h, r, noTop = false) {
+  if (noTop) {
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.closePath();
+  } else {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+}
+
+function generateAll() {
+  const preview = document.getElementById('preview');
+  preview.innerHTML = '';
+  let delay = 0;
+
+  SIZES.forEach(size => {
+    setTimeout(() => {
+      const canvas = drawIcon(size);
+      // Preview
+      const item = document.createElement('div');
+      item.className = 'prev-item';
+      const small = document.createElement('canvas');
+      small.width = small.height = Math.min(size, 64);
+      small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
+      item.appendChild(small);
+      item.appendChild(document.createTextNode(`${size}×${size}`));
+      preview.appendChild(item);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `icon-${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      if (size === SIZES[SIZES.length - 1]) {
+        setTimeout(() => {
+          document.getElementById('done').style.display = 'block';
+        }, 400);
+      }
+    }, delay);
+    delay += 180;
+  });
+}
+</script>
+</body>
+</html>
