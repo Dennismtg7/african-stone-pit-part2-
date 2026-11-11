@@ -10,6 +10,12 @@ local.properties
 
 # Android Studio generated files and folders
 captures/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
 .externalNativeBuild/
 .cxx/
 *.aab
