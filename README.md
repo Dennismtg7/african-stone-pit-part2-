@@ -49,6 +49,10 @@ For emulator-based development, run the Firebase Auth and Firestore emulators an
 
 Protected HTTP routes use `Authorization: Bearer <Firebase ID token>`. Passwords are handled by Firebase Authentication and are never stored by this API. IntaSend payments remain unavailable until `INTASEND_SECRET_KEY` is configured; do not put that secret in frontend code.
 
+## Vercel deployment
+
+Keep the Vercel project root set to the repository root. [`vercel.json`](./vercel.json) builds the web client and serves `apps/web/dist`. Deploy the API separately, then set `VITE_API_URL` in the Vercel project to that API's public origin and configure the Firebase web app values from `apps/web/.env.example`. Set the API's `WEB_ORIGIN` to the deployed site origin.
+
 ## Checks
 
 - `npm test` runs game-rule and API package tests.
